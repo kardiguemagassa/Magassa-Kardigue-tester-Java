@@ -27,13 +27,24 @@ public class ParkingService {
         this.ticketDAO = ticketDAO;
     }
 
+    // Modifiez la méthode processIncomingVehicle de la classe ParkingService pour afficher le message de bienvenue
     public void processIncomingVehicle() {
+
         try{
             ParkingSpot parkingSpot = getNextParkingNumberIfAvailable();
             if(parkingSpot !=null && parkingSpot.getId() > 0){
                 String vehicleRegNumber = getVehichleRegNumber();
                 parkingSpot.setAvailable(false);
                 parkingSpotDAO.updateParking(parkingSpot);//allot this parking space and mark it's availability as false
+
+                // Vérifier si ce véhicule est déjà passé dans le parking
+                int nbTickets = ticketDAO.getNbTicket(vehicleRegNumber);
+
+                if (nbTickets > 0) {
+                    System.out.println("Bienvenue à nouveau ! Nous sommes ravis de vous revoir.");
+                } else {
+                    System.out.println("Bienvenue ! C'est votre première visite.");
+                }
 
                 Date inTime = new Date();
                 Ticket ticket = new Ticket();
@@ -66,6 +77,7 @@ public class ParkingService {
             ParkingType parkingType = getVehichleType();
             parkingNumber = parkingSpotDAO.getNextAvailableSlot(parkingType);
             if(parkingNumber > 0){
+                //=====
                 parkingSpot = new ParkingSpot(parkingNumber,parkingType, true);
             }else{
                 throw new Exception("Error fetching parking number from DB. Parking slots might be full");
@@ -78,11 +90,18 @@ public class ParkingService {
         return parkingSpot;
     }
 
-    private ParkingType getVehichleType(){
+    public ParkingType getVehichleType(){
         System.out.println("Please select vehicle type from menu");
         System.out.println("1 CAR");
         System.out.println("2 BIKE");
-        int input = inputReaderUtil.readSelection();
+        int input;
+        try {
+            //====
+            input= inputReaderUtil.readSelection();
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Erreur lors de la saisie du type de véhicule", e);
+        }
+
         switch(input){
             case 1: {
                 return ParkingType.CAR;
@@ -91,19 +110,32 @@ public class ParkingService {
                 return ParkingType.BIKE;
             }
             default: {
-                System.out.println("Incorrect input provided");
+                //System.out.println("Incorrect input provided");
+                logger.error("Incorrect input provided");
                 throw new IllegalArgumentException("Entered input is invalid");
             }
         }
     }
 
+    //modifiez la méthode processExitingVehicle pour appeler la méthode calculateFare avec un paramètre
+    // discount à true si ce n’est pas le premier passage (utilisez getNbTicket pour le savoir).
     public void processExitingVehicle() {
         try{
             String vehicleRegNumber = getVehichleRegNumber();
             Ticket ticket = ticketDAO.getTicket(vehicleRegNumber);
             Date outTime = new Date();
             ticket.setOutTime(outTime);
-            fareCalculatorService.calculateFare(ticket);
+
+            // Vérifier si c'est le premier passage du véhicule
+            int nbTickets = ticketDAO.getNbTicket(vehicleRegNumber);
+
+            // Appeler calculateFare avec le paramètre discount
+            if(nbTickets > 1){
+                fareCalculatorService.calculateFare(ticket, true);
+            }else {
+                fareCalculatorService.calculateFare(ticket);
+            }
+
             if(ticketDAO.updateTicket(ticket)) {
                 ParkingSpot parkingSpot = ticket.getParkingSpot();
                 parkingSpot.setAvailable(true);
