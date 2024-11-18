@@ -1,5 +1,6 @@
 package com.parkit.parkingsystem.config;
 
+import com.parkit.parkingsystem.constants.PersonalConstants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -12,8 +13,9 @@ public class DataBaseConfig {
     public Connection getConnection() throws ClassNotFoundException, SQLException {
         logger.info("Create DB connection");
         Class.forName("com.mysql.cj.jdbc.Driver");
-        return DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/prod","root","rootroot");
+        //String url = PersonalConstantTest.URL + "/" + PersonalConstantTest.BD_NAME + "?" + PersonalConstantTest.SERVER_TIMEZONE;
+        String url = PersonalConstants.URL + "/" + PersonalConstants.BD_NAME + "?" + PersonalConstants.SERVER_TIMEZONE;
+        return DriverManager.getConnection(url, PersonalConstants.USERNAME, PersonalConstants.PASSWORD);
     }
 
     public void closeConnection(Connection con){
