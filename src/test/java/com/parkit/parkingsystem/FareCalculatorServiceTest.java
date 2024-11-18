@@ -40,13 +40,18 @@ public class FareCalculatorServiceTest {
         ticket.setParkingSpot(parkingSpot);
         fareCalculatorService.calculateFare(ticket);
         assertEquals(ticket.getPrice(), Fare.CAR_RATE_PER_HOUR);
-        System.out.println("test");
-        System.out.println("test");
-        System.out.println("test");
-        System.out.println("test");
-        System.out.println("test");
-        System.out.println("test");
-        System.out.println("test");
+        System.out.println("test=<<<<<<<<<<<<<<<");
+        System.out.println("test=<<<<<<<<<<<<<<<");
+        System.out.println("test=<<<<<<<<<<<<<<<");
+        System.out.println("test=<<<<<<<<<<<<<<<");
+        System.out.println("test=<<<<<<<<<<<<<<<");
+        System.out.println("test=<<<<<<<<<<<<<<<");
+        System.out.println("test=<<<<<<<<<<<<<<<");
+        System.out.println("test=<<<<<<<<<<<<<<<");
+        System.out.println("test=<<<<<<<<<<<<<<<");
+        System.out.println("test=<<<<<<<<<<<<<<<");
+        System.out.println("test=<<<<<<<<<<<<<<<");
+        System.out.println("test=<<<<<<<<<<<<<<<");
     }
 
     @Test
