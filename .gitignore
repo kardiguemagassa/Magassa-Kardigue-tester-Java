@@ -4,3 +4,7 @@ src/main/java/com/parkit/parkingsystem/constants/PersonalConstants.java
 src/test/java/com/parkit/parkingsystem/integration/contstantTest/
 
 target
+
+.DS_Store
+src/.DS_Store
+src/main/.DS_Store
