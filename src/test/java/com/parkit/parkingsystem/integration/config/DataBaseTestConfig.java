@@ -12,21 +12,15 @@ public class DataBaseTestConfig extends DataBaseConfig {
     private static final Logger logger = LogManager.getLogger("DataBaseTestConfig");
 
     public Connection getConnection() throws ClassNotFoundException, SQLException {
+
         logger.info("Create DB connection");
+
         Class.forName("com.mysql.cj.jdbc.Driver");
 
-        // Création de la chaîne de connexion
         String url = PersonalConstantTest.URL + "/" + PersonalConstantTest.BD_NAME + "?" + PersonalConstantTest.SERVER_TIMEZONE;
 
-        // Création de la connexion
         return DriverManager.getConnection(url, PersonalConstantTest.USERNAME, PersonalConstantTest.PASSWORD);
     }
-    /*
-        return DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/test","root","rootroot");
-    }
-
-     */
 
     public void closeConnection(Connection con){
         if(con!=null){

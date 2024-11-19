@@ -25,8 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
-/** @ExtendWith: => simplifie la configuration des tests en utilisant Mockito.
-Il permet d'injecter automatiquement des mocks dans les tests */
+
 @ExtendWith(MockitoExtension.class)
 public class ParkingDataBaseIT {
     private static final Logger logger = LogManager.getLogger("ParkingDataBaseIT");
@@ -34,7 +33,6 @@ public class ParkingDataBaseIT {
     private static ParkingSpotDAO parkingSpotDAO;
     private static TicketDAO ticketDAO;
     private static DataBasePrepareService dataBasePrepareService;
-    private static ParkingService parkingService;
 
     @Mock
     private static InputReaderUtil inputReaderUtil;
@@ -64,8 +62,6 @@ public class ParkingDataBaseIT {
     public void testParkingACar() {
         ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
 
-        logger.info("Je rentre dans la méthode testParkingACar()");
-
         parkingService.processIncomingVehicle();
 
         Ticket geTicketSaved = ticketDAO.getTicket("ABCDEF");
@@ -81,13 +77,13 @@ public class ParkingDataBaseIT {
     @Test
     public void testParkingLotExit() {
         testParkingACar();
-        ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
 
-        logger.info("Je rentre dans la méthode testParkingLotExit()");
+        ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
 
         parkingService.processExitingVehicle();
 
         Ticket ticketSaved = ticketDAO.getTicket("ABCDEF");
+
         logger.info("ticketSaved" + ticketSaved);
 
         logger.info("ticketSaved outtime" + ticketSaved.getOutTime());
@@ -102,10 +98,9 @@ public class ParkingDataBaseIT {
 
         ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
 
-        /** Première entrée et sortie (utilisateur non récurrent) */
         ParkingSpot parkingSpot1 = new ParkingSpot(1, ParkingType.CAR, false);
         Ticket ticket1 = new Ticket();
-        ticket1.setInTime(new Date(System.currentTimeMillis() - (60 * 60 * 1000))); // 1 heure avant
+        ticket1.setInTime(new Date(System.currentTimeMillis() - (60 * 60 * 1000)));
         ticket1.setOutTime(new Date());
         ticket1.setVehicleRegNumber("ABCDEF");
         ticket1.setParkingSpot(parkingSpot1);
@@ -113,10 +108,9 @@ public class ParkingDataBaseIT {
 
         parkingService.processExitingVehicle();
 
-        /** Deuxième entrée et sortie pour l'utilisateur récurrent */
         ParkingSpot parkingSpot2 = new ParkingSpot(2, ParkingType.CAR, false);
         Ticket ticket2 = new Ticket();
-        ticket2.setInTime(new Date(System.currentTimeMillis() - (60 * 60 * 1000))); // 1 heure avant
+        ticket2.setInTime(new Date(System.currentTimeMillis() - (60 * 60 * 1000)));
         ticket2.setOutTime(new Date());
         ticket2.setVehicleRegNumber("ABCDEF");
         ticket2.setParkingSpot(parkingSpot2);
@@ -124,16 +118,13 @@ public class ParkingDataBaseIT {
 
         parkingService.processExitingVehicle();
 
-        /** Récupérer le ticket de l'utilisateur récurrent */
         Ticket ticketSaved = ticketDAO.getTicket("ABCDEF");
         assertNotNull(ticketSaved.getOutTime(), "L'heure de sortie ne doit pas être null.");
         assertNotNull(ticketSaved.getParkingSpot(), "La place de parking ne doit pas être null.");
 
-        /** Vérifier le nombre de tickets pour cet utilisateur (doit être supérieur à 1) */
         int nbOfTickets = ticketDAO.getNbTicket("ABCDEF");
         assertTrue(nbOfTickets > 1, "L'utilisateur doit être marqué comme récurrent.");
 
-        /** Vérifier que la remise de 5% est appliquée */
         double expectedFare = Fare.CAR_RATE_PER_HOUR * 0.95;
         assertEquals(expectedFare, ticketSaved.getPrice(), 0.01, "La remise de 5% doit être appliquée.");
     }
