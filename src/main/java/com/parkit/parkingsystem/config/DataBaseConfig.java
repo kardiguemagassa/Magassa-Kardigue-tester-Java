@@ -13,7 +13,7 @@ public class DataBaseConfig {
     public Connection getConnection() throws ClassNotFoundException, SQLException {
         logger.info("Create DB connection");
         Class.forName("com.mysql.cj.jdbc.Driver");
-        //String url = PersonalConstantTest.URL + "/" + PersonalConstantTest.BD_NAME + "?" + PersonalConstantTest.SERVER_TIMEZONE;
+
         String url = PersonalConstants.URL + "/" + PersonalConstants.BD_NAME + "?" + PersonalConstants.SERVER_TIMEZONE;
         return DriverManager.getConnection(url, PersonalConstants.USERNAME, PersonalConstants.PASSWORD);
     }
