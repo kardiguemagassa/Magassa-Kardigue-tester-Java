@@ -27,7 +27,6 @@ public class ParkingService {
         this.ticketDAO = ticketDAO;
     }
 
-    // Modifiez la méthode processIncomingVehicle de la classe ParkingService pour afficher le message de bienvenue
     public void processIncomingVehicle() {
 
         try{
@@ -35,9 +34,8 @@ public class ParkingService {
             if(parkingSpot !=null && parkingSpot.getId() > 0){
                 String vehicleRegNumber = getVehichleRegNumber();
                 parkingSpot.setAvailable(false);
-                parkingSpotDAO.updateParking(parkingSpot);//allot this parking space and mark it's availability as false
+                parkingSpotDAO.updateParking(parkingSpot);
 
-                // Vérifier si ce véhicule est déjà passé dans le parking
                 int nbTickets = ticketDAO.getNbTicket(vehicleRegNumber);
 
                 if (nbTickets > 0) {
@@ -48,8 +46,7 @@ public class ParkingService {
 
                 Date inTime = new Date();
                 Ticket ticket = new Ticket();
-                //ID, PARKING_NUMBER, VEHICLE_REG_NUMBER, PRICE, IN_TIME, OUT_TIME)
-                //ticket.setId(ticketID);
+
                 ticket.setParkingSpot(parkingSpot);
                 ticket.setVehicleRegNumber(vehicleRegNumber);
                 ticket.setPrice(0);
@@ -57,8 +54,8 @@ public class ParkingService {
                 ticket.setOutTime(null);
                 ticketDAO.saveTicket(ticket);
                 System.out.println("Generated Ticket and saved in DB");
-                System.out.println("Please park your vehicle in spot number:"+parkingSpot.getId());
-                System.out.println("Recorded in-time for vehicle number:"+vehicleRegNumber+" is:"+inTime);
+                System.out.println("Please park your vehicle in spot number:" + parkingSpot.getId());
+                System.out.println("Recorded in-time for vehicle number:" + vehicleRegNumber+" is:" + inTime);
             }
         }catch(Exception e){
             logger.error("Unable to process incoming vehicle",e);
@@ -73,11 +70,12 @@ public class ParkingService {
     public ParkingSpot getNextParkingNumberIfAvailable(){
         int parkingNumber=0;
         ParkingSpot parkingSpot = null;
+
         try{
             ParkingType parkingType = getVehichleType();
             parkingNumber = parkingSpotDAO.getNextAvailableSlot(parkingType);
+
             if(parkingNumber > 0){
-                //=====
                 parkingSpot = new ParkingSpot(parkingNumber,parkingType, true);
             }else{
                 throw new Exception("Error fetching parking number from DB. Parking slots might be full");
@@ -96,7 +94,7 @@ public class ParkingService {
         System.out.println("2 BIKE");
         int input;
         try {
-            //====
+
             input= inputReaderUtil.readSelection();
         } catch (Exception e) {
             throw new IllegalArgumentException("Erreur lors de la saisie du type de véhicule", e);
@@ -110,15 +108,12 @@ public class ParkingService {
                 return ParkingType.BIKE;
             }
             default: {
-                //System.out.println("Incorrect input provided");
                 logger.error("Incorrect input provided");
                 throw new IllegalArgumentException("Entered input is invalid");
             }
         }
     }
 
-    //modifiez la méthode processExitingVehicle pour appeler la méthode calculateFare avec un paramètre
-    // discount à true si ce n’est pas le premier passage (utilisez getNbTicket pour le savoir).
     public void processExitingVehicle() {
         try{
             String vehicleRegNumber = getVehichleRegNumber();
@@ -126,10 +121,8 @@ public class ParkingService {
             Date outTime = new Date();
             ticket.setOutTime(outTime);
 
-            // Vérifier si c'est le premier passage du véhicule
             int nbTickets = ticketDAO.getNbTicket(vehicleRegNumber);
 
-            // Appeler calculateFare avec le paramètre discount
             if(nbTickets > 1){
                 fareCalculatorService.calculateFare(ticket, true);
             }else {
