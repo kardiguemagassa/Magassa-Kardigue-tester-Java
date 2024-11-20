@@ -19,16 +19,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Date;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
-
 
 @ExtendWith(MockitoExtension.class)
 public class ParkingDataBaseIT {
     private static final Logger logger = LogManager.getLogger("ParkingDataBaseIT");
+
     private static DataBaseTestConfig dataBaseTestConfig = new DataBaseTestConfig();
     private static ParkingSpotDAO parkingSpotDAO;
     private static TicketDAO ticketDAO;
@@ -41,16 +39,18 @@ public class ParkingDataBaseIT {
     public static void setUp() throws Exception {
         parkingSpotDAO = new ParkingSpotDAO();
         parkingSpotDAO.dataBaseConfig = dataBaseTestConfig;
+
         ticketDAO = new TicketDAO();
         ticketDAO.dataBaseConfig = dataBaseTestConfig;
+
         dataBasePrepareService = new DataBasePrepareService();
     }
 
     @BeforeEach
     public void setUpPerTest() throws Exception {
-        lenient().when(inputReaderUtil.readSelection()).thenReturn(1);
+        lenient().when(inputReaderUtil.readSelection()).thenReturn(1); // Car type vehicle
         when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn("ABCDEF");
-        dataBasePrepareService.clearDataBaseEntries();
+        dataBasePrepareService.clearDataBaseEntries(); // Clean database before each test
     }
 
     @AfterAll
@@ -62,70 +62,67 @@ public class ParkingDataBaseIT {
     public void testParkingACar() {
         ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
 
+        logger.info("Starting test: testParkingACar");
+
         parkingService.processIncomingVehicle();
 
-        Ticket geTicketSaved = ticketDAO.getTicket("ABCDEF");
+        Ticket ticketSaved = ticketDAO.getTicket("ABCDEF");
+        assertNotNull(ticketSaved, "The ticket should not be null.");
+        assertEquals("ABCDEF", ticketSaved.getVehicleRegNumber(), "Vehicle registration number should match.");
 
-        logger.info("geTicketSaved dans testParkingACar" + geTicketSaved);
-        assertNotNull(geTicketSaved);
-
-        boolean updatedParking = parkingSpotDAO.updateParking(geTicketSaved.getParkingSpot());
-        assertTrue(updatedParking);
-
+        ParkingSpot parkingSpot = parkingSpotDAO.getParkingSpot(ticketSaved.getParkingSpot().getId());
+        assertNotNull(parkingSpot, "Parking spot should not be null.");
+        assertFalse(parkingSpot.isAvailable(), "The parking spot should be marked as occupied.");
     }
 
     @Test
     public void testParkingLotExit() {
-        testParkingACar();
+        testParkingACar(); // Simulate vehicle entry
 
         ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
 
         parkingService.processExitingVehicle();
 
         Ticket ticketSaved = ticketDAO.getTicket("ABCDEF");
-
         logger.info("ticketSaved" + ticketSaved);
-
         logger.info("ticketSaved outtime" + ticketSaved.getOutTime());
 
-        boolean updatedTicket = ticketDAO.updateTicket(ticketSaved);
-        assertTrue(updatedTicket);
+        assertNotNull(ticketSaved, "The ticket should not be null.");
+        assertNotNull(ticketSaved.getOutTime(), "The out time should not be null.");
+        assertTrue(ticketDAO.updateTicket(ticketSaved), "The ticket should be updated successfully.");
     }
 
     @Test
-    @DisplayName("Vérifier la remise de 5% pour un utilisateur récurrent")
+    @DisplayName("Verify 5% discount for recurring users")
     public void testParkingLotExitRecurringUser() {
-
         ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
 
-        ParkingSpot parkingSpot1 = new ParkingSpot(1, ParkingType.CAR, false);
-        Ticket ticket1 = new Ticket();
-        ticket1.setInTime(new Date(System.currentTimeMillis() - (60 * 60 * 1000)));
-        ticket1.setOutTime(new Date());
-        ticket1.setVehicleRegNumber("ABCDEF");
-        ticket1.setParkingSpot(parkingSpot1);
-        ticketDAO.saveTicket(ticket1);
+        // First parking session
+        Ticket firstTicket = new Ticket();
+        firstTicket.setInTime(new Date(System.currentTimeMillis() - (60 * 60 * 1000))); // 1 hour ago
+        firstTicket.setOutTime(new Date());
+        firstTicket.setVehicleRegNumber("ABCDEF");
+        firstTicket.setParkingSpot(new ParkingSpot(1, ParkingType.CAR, false));
+        ticketDAO.saveTicket(firstTicket);
 
         parkingService.processExitingVehicle();
 
-        ParkingSpot parkingSpot2 = new ParkingSpot(2, ParkingType.CAR, false);
-        Ticket ticket2 = new Ticket();
-        ticket2.setInTime(new Date(System.currentTimeMillis() - (60 * 60 * 1000)));
-        ticket2.setOutTime(new Date());
-        ticket2.setVehicleRegNumber("ABCDEF");
-        ticket2.setParkingSpot(parkingSpot2);
-        ticketDAO.saveTicket(ticket2);
+        // Second parking session (Recurring user)
+        Ticket secondTicket = new Ticket();
+        secondTicket.setInTime(new Date(System.currentTimeMillis() - (60 * 60 * 1000))); // 1 hour ago
+        secondTicket.setOutTime(new Date());
+        secondTicket.setVehicleRegNumber("ABCDEF");
+        secondTicket.setParkingSpot(new ParkingSpot(2, ParkingType.CAR, false));
+        ticketDAO.saveTicket(secondTicket);
 
         parkingService.processExitingVehicle();
 
-        Ticket ticketSaved = ticketDAO.getTicket("ABCDEF");
-        assertNotNull(ticketSaved.getOutTime(), "L'heure de sortie ne doit pas être null.");
-        assertNotNull(ticketSaved.getParkingSpot(), "La place de parking ne doit pas être null.");
+        // Verify user is recurring and discount is applied
+        Ticket savedTicket = ticketDAO.getTicket("ABCDEF");
+        assertNotNull(savedTicket.getOutTime(), "The out time should not be null.");
+        assertTrue(ticketDAO.getNbTicket("ABCDEF") > 1, "The user should be marked as recurring.");
 
-        int nbOfTickets = ticketDAO.getNbTicket("ABCDEF");
-        assertTrue(nbOfTickets > 1, "L'utilisateur doit être marqué comme récurrent.");
-
-        double expectedFare = Fare.CAR_RATE_PER_HOUR * 0.95;
-        assertEquals(expectedFare, ticketSaved.getPrice(), 0.01, "La remise de 5% doit être appliquée.");
+        double expectedFare = Fare.CAR_RATE_PER_HOUR * 0.95; // 5% discount
+        assertEquals(expectedFare, savedTicket.getPrice(), 0.01, "5% discount should be applied.");
     }
 }
