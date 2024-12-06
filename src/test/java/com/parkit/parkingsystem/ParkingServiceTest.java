@@ -22,7 +22,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Date;
 
-import static junit.framework.Assert.assertNull;
+
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
@@ -138,7 +139,7 @@ public class ParkingServiceTest {
         when(inputReaderUtil.readSelection()).thenReturn(3);
 
         assertThrows(IllegalArgumentException.class, () -> parkingService.getVehichleType(), "Entered input is invalid");
-        Assertions.assertNull(parkingService.getNextParkingNumberIfAvailable());
+        assertNull(parkingService.getNextParkingNumberIfAvailable());
     }
 
     @Test
